@@ -1,9 +1,7 @@
-// stages/stage3_hunter.js
-// Stage 3 — Resolve emails from LinkedIn URL or full name via Hunter.io
-// Strategy per prospect:
+// stages/stageThree.js
 //   Try 1: email-finder with linkedin_handle
 //   Try 2: email-finder with full_name (fallback)
-//   Verify: email-verifier → only keep "valid" status emails
+//   Verify Email
 
 const axios = require('axios');
 const config = require('../config');
@@ -12,7 +10,7 @@ const { sleep } = require('../utils/helper');
 const BASE_URL = config.hunter.baseUrl;
 const API_KEY  = config.hunter.apiKey;
 
-// ── Try finding email via LinkedIn handle ──────────────────────────────────
+// find email via linkedin url
 async function findByLinkedin(domain, linkedinUrl) {
   try {
     const res = await axios.get(`${BASE_URL}/email-finder`, {
@@ -31,7 +29,7 @@ async function findByLinkedin(domain, linkedinUrl) {
   }
 }
 
-// ── Fallback: find email via full name ─────────────────────────────────────
+// find email via full name 
 async function findByName(domain, fullName) {
   try {
     const parts      = fullName.trim().split(' ');
@@ -54,7 +52,7 @@ async function findByName(domain, fullName) {
   }
 }
 
-// ── Verify the email — only accept "valid" status ──────────────────────────
+// Verify the email 
 async function verifyEmail(email) {
   try {
     const res = await axios.get(`${BASE_URL}/email-verifier`, {
@@ -98,7 +96,7 @@ async function resolveEmails(prospects) {
 
     // Try 2 — Full name fallback
     if (!foundEmail && name) {
-      process.stdout.write(`    📛 Trying full name...`);
+      process.stdout.write(`    Trying full name fallback`);
       foundEmail = await findByName(company_domain, name);
 
       if (foundEmail) {
@@ -112,12 +110,12 @@ async function resolveEmails(prospects) {
 
     // No email found at all — skip
     if (!foundEmail) {
-      console.log(`    ❌ Could not find email — skipping`);
+      console.log(`    Could not find email — skipping`);
       continue;
     }
 
     // Verify — only keep valid emails
-    process.stdout.write(`    ✅ Verifying ${foundEmail}...`);
+    process.stdout.write(`    Verifying ${foundEmail}...`);
     const isValid = await verifyEmail(foundEmail);
 
     if (isValid) {
@@ -136,7 +134,7 @@ async function resolveEmails(prospects) {
     await sleep(2000);
   }
 
-  console.log(`\n  ✅ Stage 3 complete — ${verified.length}/${prospects.length} valid emails found`);
+  console.log(`\n  Stage 3 complete — ${verified.length}/${prospects.length} valid emails found`);
   return verified;
 }
 

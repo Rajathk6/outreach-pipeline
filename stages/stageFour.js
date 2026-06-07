@@ -1,6 +1,5 @@
-// stages/stage4_brevo.js
-// Stage 4 — Send personalized cold outreach emails via Brevo
-// Flow:
+// stages/stageFour.js
+// Steps:
 //   1. Generate personalized email for each contact
 //   2. Save all emails to data/email_preview.json for review
 //   3. Ask for confirmation (y to send, anything else cancels)
@@ -17,7 +16,7 @@ const HEADERS  = {
   'Content-Type': 'application/json'
 };
 
-// ── Generate personalized email copy for each contact ─────────────────────
+// generic email template
 function generateEmail(contact) {
   const firstName = contact.name.split(' ')[0];
   const company   = contact.company_domain
@@ -44,8 +43,7 @@ ${config.sender.email}`;
 
   return { subject, body };
 }
-
-// ── Build full preview of all emails before sending ───────────────────────
+// email preview template
 function buildEmailPreviews(contacts) {
   return contacts.map((contact, i) => {
     const { subject, body } = generateEmail(contact);
@@ -76,7 +74,7 @@ function waitForConfirmation() {
   });
 }
 
-// ── Send a single email via Brevo ──────────────────────────────────────────
+// ── Send personalized email  ──────────────────────────────────────────
 async function sendEmail(contact) {
   const { subject, body } = generateEmail(contact);
 
@@ -100,13 +98,13 @@ async function sendEmail(contact) {
 async function sendOutreach(contacts) {
 
   // Step 1 — Generate and save all email previews
-  console.log(`\n  ✍️  Generating email previews for ${contacts.length} contacts...`);
+  console.log(`\n   Generating email previews for ${contacts.length} contacts...`);
   const previews = buildEmailPreviews(contacts);
   saveData('email_preview.json', previews);
 
   // Step 2 — Print summary to terminal
   console.log('\n' + '═'.repeat(50));
-  console.log('  📋 OUTREACH SUMMARY — REVIEW BEFORE SENDING');
+  console.log('  OUTREACH SUMMARY — REVIEW BEFORE SENDING');
   console.log('═'.repeat(50));
 
   previews.forEach(p => {
@@ -116,7 +114,7 @@ async function sendOutreach(contacts) {
   });
 
   console.log('\n' + '═'.repeat(50));
-  console.log(`  📁 Full email content saved to: data/email_preview.json`);
+  console.log(`  Full email content saved to: data/email_preview.json`);
   console.log(`  Open that file to review each email body before approving.`);
   console.log('═'.repeat(50));
 
@@ -124,18 +122,18 @@ async function sendOutreach(contacts) {
   const confirmed = await waitForConfirmation();
 
   if (!confirmed) {
-    console.log('\n  🚫 Cancelled — no emails sent.');
+    console.log('\n  Cancelled — no emails sent.');
     return;
   }
 
   // Step 4 — Send emails one by one
-  console.log('\n  🚀 Sending emails...\n');
+  console.log('\n  Sending emails...\n');
   let sent = 0;
   let failed = 0;
 
   for (const contact of contacts) {
     try {
-      process.stdout.write(`  📨 Sending to ${contact.name} (${contact.email})...`);
+      process.stdout.write(`  Sending to ${contact.name} (${contact.email})...`);
       const ok = await sendEmail(contact);
 
       if (ok) {
@@ -155,7 +153,7 @@ async function sendOutreach(contacts) {
 
   // Final report
   console.log('\n' + '═'.repeat(50));
-  console.log(`  📊 DONE — ${sent} sent, ${failed} failed out of ${contacts.length} total`);
+  console.log(`  DONE — ${sent} sent, ${failed} failed out of ${contacts.length} total`);
   console.log('═'.repeat(50));
 }
 
