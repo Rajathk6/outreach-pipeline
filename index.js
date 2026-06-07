@@ -1,5 +1,6 @@
 // index.js — Main pipeline runner
 const { findLookalikeCompanies } = require('./stages/stageOne');
+const { findDecisionMakers } = require('./stages/stageTwo');
 const { saveData, printStage }   = require('./utils/helper');
 
 async function runPipeline(seedDomain) {
@@ -21,7 +22,20 @@ async function runPipeline(seedDomain) {
   console.log('\n  ✅ Stage 1 complete. companies.json written.');
   console.log('\n  ⏳ Stage 2 (Prospeo) coming next...');
 
-  // Stages 2, 3, 4 will be added here
+  // ── STAGE 2 ────────────────────────────────────────────
+  printStage(2, 'Finding Decision Makers + LinkedIn URLs (Prospeo)');
+  const prospects = await findDecisionMakers(companies);
+  saveData('prospects.json', prospects);
+ 
+  if (!prospects.length) {
+    console.log('\n  ❌ No prospects found. Stopping.');
+    return;
+  }
+ 
+  console.log('\n  ✅ Stage 2 complete. prospects.json written.');
+  console.log('\n  ⏳ Stage 3 (Eazyreach) coming next...');
+ 
+  // Stages 3, 4 will be added here
 }
 
 // ── CLI entry ──────────────────────────────────────────────────────────────
