@@ -1,5 +1,3 @@
-// utils/helpers.js
-
 const fs = require('fs');
 const path = require('path');
 
@@ -12,7 +10,7 @@ const saveData = (filename, data) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   const filepath = path.join(dir, filename);
   fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
-  console.log(`  💾 Saved → data/${filename} (${Array.isArray(data) ? data.length + ' records' : 'object'})`);
+  console.log(`  Saved → data/${filename} (${Array.isArray(data) ? data.length + ' records' : 'object'})`);
 };
 
 // ── Load previously saved data ─────────────────────────────────────────────
@@ -30,8 +28,8 @@ const withRetry = async (fn, retries = 3, delay = 2000) => {
     } catch (err) {
       const isLast = i === retries - 1;
       if (isLast) throw err;
-      console.log(`  ⚠️  Attempt ${i + 1} failed: ${err.message}`);
-      console.log(`  🔄 Retrying in ${delay / 1000}s...`);
+      console.log(`  Attempt ${i + 1} failed: ${err.message}`);
+      console.log(`  Retrying in ${delay / 1000}s...`);
       await sleep(delay);
     }
   }

@@ -1,8 +1,6 @@
-// stages/stage2_prospeo.js
-// Stage 2 — Find top management LinkedIn URLs via Prospeo
-// One call per company:
-//   search-person → returns person name, title, linkedin_url
-// No email enrichment here — that's Stage 3 (Eazyreach)
+// stages/stageTwo.js
+//   search-person by seniority→ returns person name, title, linkedin_url
+
 
 const axios = require('axios');
 const config = require('../config');
@@ -16,10 +14,8 @@ const HEADERS = {
 
 const TARGET_SENIORITIES = ['Founder/Owner', 'C-Suite', 'Vice President'];
 
-// Max people to pull per company — free plan safety
 const MAX_PER_COMPANY = 2;
 
-// ── Search for top management at a given domain ────────────────────────────
 async function searchPeopleAtDomain(domain) {
   try {
     const response = await withRetry(() =>
@@ -38,7 +34,7 @@ async function searchPeopleAtDomain(domain) {
     );
 
     if (response.data.error) {
-      console.log(`  ⚠️  ${domain}: ${response.data.error_code}`);
+      console.log(`  ${domain}: ${response.data.error_code}`);
       return [];
     }
 
@@ -46,7 +42,7 @@ async function searchPeopleAtDomain(domain) {
     return results.slice(0, MAX_PER_COMPANY);
 
   } catch (err) {
-    console.log(`  ❌ Failed for ${domain}: ${err.message}`);
+    console.log(`  Failed for ${domain}: ${err.message}`);
     return [];
   }
 }
@@ -56,12 +52,12 @@ async function findDecisionMakers(domains) {
   const allProspects = [];
 
   for (const domain of domains) {
-    console.log(`\n  📡 Processing: ${domain}`);
+    console.log(`\n   Processing: ${domain}`);
 
     const people = await searchPeopleAtDomain(domain);
 
     if (!people.length) {
-      console.log(`  ⏭️  No results — skipping`);
+      console.log(`   No results — skipping`);
       await sleep(2000);
       continue;
     }
@@ -74,7 +70,7 @@ async function findDecisionMakers(domains) {
       const title       = person.current_job_title || person.job_title || null;
 
       if (!linkedinUrl) {
-        console.log(`    ⏭️  ${name} — no LinkedIn URL, skipping`);
+        console.log(`   ${name} — no LinkedIn URL, skipping`);
         continue;
       }
 
@@ -85,14 +81,13 @@ async function findDecisionMakers(domains) {
         company_domain: domain
       });
 
-      console.log(`    ✅ ${name} (${title}) → ${linkedinUrl}`);
+      console.log(`    ${name} (${title}) → ${linkedinUrl}`);
     }
 
-    // Pause between companies to respect rate limits
     await sleep(3000);
   }
 
-  console.log(`\n  ✅ Stage 2 complete — ${allProspects.length} prospects with LinkedIn URLs`);
+  console.log(`\n  Stage 2 complete — ${allProspects.length} prospects with LinkedIn URLs`);
   return allProspects;
 }
 
