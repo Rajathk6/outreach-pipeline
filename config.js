@@ -2,9 +2,9 @@
 require('dotenv').config();
 
 module.exports = {
-  ocean: {
+  hunter: {
     apiKey: process.env.HUNTER_API_KEY,
-    baseUrl: 'https://api.ocean.io/v1'
+    baseUrl: 'https://api.hunter.io/v2'
   },
   prospeo: {
     apiKey: process.env.PROSPEO_API_KEY,
