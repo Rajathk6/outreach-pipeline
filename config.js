@@ -10,10 +10,6 @@ module.exports = {
     apiKey: process.env.PROSPEO_API_KEY,
     baseUrl: 'https://api.prospeo.io'
   },
-  eazyreach: {
-    apiKey: process.env.EAZYREACH_API_KEY,
-    baseUrl: 'https://api.eazyreach.app/v1'
-  },
   brevo: {
     apiKey: process.env.BREVO_API_KEY,
     baseUrl: 'https://api.brevo.com/v3'
