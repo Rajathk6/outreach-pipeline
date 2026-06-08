@@ -24,23 +24,23 @@ function generateEmail(contact) {
     .replace(/^www\./, '');
   const companyFormatted = company.charAt(0).toUpperCase() + company.slice(1);
   const title = contact.title || 'there';
-
-  const subject = `Quick idea for ${companyFormatted}, ${firstName}`;
-
+ 
+  const subject = `${firstName}, had a thought about ${companyFormatted}`;
+ 
   const body = `Hi ${firstName},
-
-I came across ${companyFormatted} and was genuinely impressed by what your team is building.
-
-As ${title}, you're likely thinking about how to scale pipeline and outreach without linearly increasing headcount or manual effort.
-
-We help companies automate their entire outbound process end to end — from identifying the right accounts to landing personalized emails in the right inboxes, completely hands-free.
-
-Would you be open to a 15-minute conversation this week to see if there's a fit?
-
-Best,
+ 
+I'll keep this short.
+ 
+I was looking at what ${companyFormatted} is doing and had a specific thought — most ${title}-level folks I talk to are spending way more time than they should on outbound. Sourcing accounts, finding contacts, writing emails — it's all manual and it doesn't scale.
+ 
+We built a pipeline that handles all of it automatically. One input, and it sources lookalike companies, finds the right people, verifies their emails, and sends personalized outreach — no humans in the loop.
+ 
+Would you be open to a quick call next week? I'd love to learn about how you're currently handling outbound and share what we've learned from running this pipeline for 100+ companies so far.
+  
+Best regards,
 ${config.sender.name}
 ${config.sender.email}`;
-
+ 
   return { subject, body };
 }
 // email preview template

@@ -42,4 +42,16 @@ const printStage = (num, title) => {
   console.log('━'.repeat(50));
 };
 
-module.exports = { sleep, saveData, loadData, withRetry, printStage };
+// Prevents same person or same email appearing twice across companies
+const deduplicateBy = (arr, key) => {
+  const seen = new Set();
+  return arr.filter(item => {
+    const val = item[key]?.toLowerCase?.() || item[key];
+    if (!val || seen.has(val)) return false;
+    seen.add(val);
+    return true;
+  });
+};
+
+module.exports = { sleep, saveData, loadData, withRetry, printStage, deduplicateBy };
+
