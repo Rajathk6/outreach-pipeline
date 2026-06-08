@@ -19,16 +19,15 @@ async function searchPeopleAtDomain(domain) {
   try {
     const response = await withRetry(() =>
       axios.post(`${BASE_URL}/search-person`, {
-        "page": 1,
+        page: 1,
         filters: {
           company: {
             websites: { include: [domain] }
           },
           person_seniority: {
             include: TARGET_SENIORITIES
-          },
-          
-        }
+          }
+        },
       }, { headers: HEADERS })
     );
 
@@ -41,7 +40,20 @@ async function searchPeopleAtDomain(domain) {
     return results.slice(0, MAX_PER_COMPANY);
 
   } catch (err) {
-    console.log(`  Failed for ${domain}: ${err.message}`);
+    const status = err.response?.status;
+    const msg    = err.response?.data?.message || err.message;
+
+    console.log(`  Failed for ${domain} [${status}]: ${msg}`);
+
+    if (status === 401 || status === 403) {
+      console.log('  Check your PROSPEO_API_KEY in .env');
+      process.exit(1);
+    }
+    if (status === 429) {
+      console.log('  Monthly limit reached on Prospeo. Upgrade your plan to continue.');
+      process.exit(1);
+    }
+
     return [];
   }
 }

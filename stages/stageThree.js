@@ -19,6 +19,15 @@ async function findByLinkedin(domain, linkedinUrl) {
     });
     return res.data?.data?.email || null;
   } catch (err) {
+    const status = err.response?.status;
+    if (status === 401 || status === 403) {
+      console.log('\n  Check your HUNTER_API_KEY in .env');
+      process.exit(1);
+    }
+    if (status === 429) {
+      console.log('\n  Monthly limit reached on Hunter.io. Upgrade your plan to continue.');
+      process.exit(1);
+    }
     return null;
   }
 }
@@ -31,6 +40,15 @@ async function findByName(domain, fullName) {
     });
     return res.data?.data?.email || null;
   } catch (err) {
+    const status = err.response?.status;
+    if (status === 401 || status === 403) {
+      console.log('\n  Check your HUNTER_API_KEY in .env');
+      process.exit(1);
+    }
+    if (status === 429) {
+      console.log('\n  Monthly limit reached on Hunter.io. Upgrade your plan to continue.');
+      process.exit(1);
+    }
     return null;
   }
 }
@@ -43,6 +61,15 @@ async function verifyEmail(email) {
     });
     return res.data?.data?.status === 'valid';
   } catch (err) {
+    const status = err.response?.status;
+    if (status === 401 || status === 403) {
+      console.log('\n  Check your HUNTER_API_KEY in .env');
+      process.exit(1);
+    }
+    if (status === 429) {
+      console.log('\n  Monthly limit reached on Hunter.io. Upgrade your plan to continue.');
+      process.exit(1);
+    }
     return false;
   }
 }
