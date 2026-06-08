@@ -2,10 +2,11 @@
 //   Try 1: email-finder with linkedin_handle
 //   Try 2: email-finder with full_name (fallback)
 //   Verify Email
+//   Deduplicates by email before returning
 
 const axios = require('axios');
 const config = require('../config');
-const { sleep } = require('../utils/helper');
+const { sleep, deduplicateBy } = require('../utils/helper');
 
 const BASE_URL = config.hunter.baseUrl;
 const API_KEY  = config.hunter.apiKey;
@@ -14,63 +15,38 @@ const API_KEY  = config.hunter.apiKey;
 async function findByLinkedin(domain, linkedinUrl) {
   try {
     const res = await axios.get(`${BASE_URL}/email-finder`, {
-      params: {
-        domain,
-        linkedin_handle: linkedinUrl,
-        api_key: API_KEY
-      }
+      params: { domain, linkedin_handle: linkedinUrl, api_key: API_KEY }
     });
-
-    const email = res.data?.data?.email;
-    return email || null;
-
+    return res.data?.data?.email || null;
   } catch (err) {
     return null;
   }
 }
 
-// find email via full name 
+// find email via full name
 async function findByName(domain, fullName) {
   try {
-    const parts      = fullName.trim().split(' ');
-    const first_name = parts[0];
-    const last_name  = parts.slice(1).join(' ') || parts[0];
-
     const res = await axios.get(`${BASE_URL}/email-finder`, {
-      params: {
-        domain,
-        full_name: fullName,
-        api_key: API_KEY
-      }
+      params: { domain, full_name: fullName, api_key: API_KEY }
     });
-
-    const email = res.data?.data?.email;
-    return email || null;
-
+    return res.data?.data?.email || null;
   } catch (err) {
     return null;
   }
 }
 
-// Verify the email 
+// Verify the email
 async function verifyEmail(email) {
   try {
     const res = await axios.get(`${BASE_URL}/email-verifier`, {
-      params: {
-        email,
-        api_key: API_KEY
-      }
+      params: { email, api_key: API_KEY }
     });
-
-    const status = res.data?.data?.status;
-    return status === 'valid';
-
+    return res.data?.data?.status === 'valid';
   } catch (err) {
     return false;
   }
 }
 
-// ── Main Stage 3 function ──────────────────────────────────────────────────
 async function resolveEmails(prospects) {
   const verified = [];
 
@@ -84,13 +60,7 @@ async function resolveEmails(prospects) {
     if (linkedin_url) {
       process.stdout.write(`    🔗 Trying LinkedIn handle...`);
       foundEmail = await findByLinkedin(company_domain, linkedin_url);
-
-      if (foundEmail) {
-        console.log(` found → ${foundEmail}`);
-      } else {
-        console.log(` no result`);
-      }
-
+      console.log(foundEmail ? ` found → ${foundEmail}` : ` no result`);
       await sleep(1500);
     }
 
@@ -98,17 +68,10 @@ async function resolveEmails(prospects) {
     if (!foundEmail && name) {
       process.stdout.write(`    Trying full name fallback`);
       foundEmail = await findByName(company_domain, name);
-
-      if (foundEmail) {
-        console.log(` found → ${foundEmail}`);
-      } else {
-        console.log(` no result`);
-      }
-
+      console.log(foundEmail ? ` found → ${foundEmail}` : ` no result`);
       await sleep(1500);
     }
 
-    // No email found at all — skip
     if (!foundEmail) {
       console.log(`    Could not find email — skipping`);
       continue;
@@ -120,13 +83,7 @@ async function resolveEmails(prospects) {
 
     if (isValid) {
       console.log(` valid ✅`);
-      verified.push({
-        name,
-        title,
-        email: foundEmail,
-        linkedin_url,
-        company_domain
-      });
+      verified.push({ name, title, email: foundEmail, linkedin_url, company_domain });
     } else {
       console.log(` invalid ❌ — discarded`);
     }
@@ -134,8 +91,13 @@ async function resolveEmails(prospects) {
     await sleep(2000);
   }
 
-  console.log(`\n  Stage 3 complete — ${verified.length}/${prospects.length} valid emails found`);
-  return verified;
+  const deduped = deduplicateBy(verified, 'email');
+
+  const removed = verified.length - deduped.length;
+  if (removed > 0) console.log(`\n  Removed ${removed} duplicate email(s)`);
+
+  console.log(`\n  Stage 3 complete — ${deduped.length}/${prospects.length} valid emails found`);
+  return deduped;
 }
 
 module.exports = { resolveEmails };
