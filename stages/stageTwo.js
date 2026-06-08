@@ -1,10 +1,10 @@
 // stages/stageTwo.js
-//   search-person by seniority→ returns person name, title, linkedin_url
-
+//   search-person by seniority → returns person name, title, linkedin_url
+//   deduplicates by linkedin_url before returning
 
 const axios = require('axios');
 const config = require('../config');
-const { sleep, withRetry } = require('../utils/helper');
+const { sleep, withRetry, deduplicateBy } = require('../utils/helper');
 
 const BASE_URL = config.prospeo.baseUrl;
 const HEADERS = {
@@ -13,22 +13,21 @@ const HEADERS = {
 };
 
 const TARGET_SENIORITIES = ['Founder/Owner', 'C-Suite', 'Vice President'];
-
-const MAX_PER_COMPANY = 2;
+const MAX_PER_COMPANY    = 2;
 
 async function searchPeopleAtDomain(domain) {
   try {
     const response = await withRetry(() =>
       axios.post(`${BASE_URL}/search-person`, {
+        "page": 1,
         filters: {
           company: {
-            websites: {
-              include: [domain]
-            }
+            websites: { include: [domain] }
           },
           person_seniority: {
             include: TARGET_SENIORITIES
-          }
+          },
+          
         }
       }, { headers: HEADERS })
     );
@@ -47,7 +46,6 @@ async function searchPeopleAtDomain(domain) {
   }
 }
 
-// ── Main Stage 2 function ──────────────────────────────────────────────────
 async function findDecisionMakers(domains) {
   const allProspects = [];
 
@@ -63,8 +61,7 @@ async function findDecisionMakers(domains) {
     }
 
     for (const result of people) {
-      const person = result.person || result;
-
+      const person      = result.person || result;
       const linkedinUrl = person.linkedin_url || person.linkedin || null;
       const name        = person.full_name || `${person.first_name || ''} ${person.last_name || ''}`.trim();
       const title       = person.current_job_title || person.job_title || null;
@@ -74,21 +71,20 @@ async function findDecisionMakers(domains) {
         continue;
       }
 
-      allProspects.push({
-        name,
-        title,
-        linkedin_url: linkedinUrl,
-        company_domain: domain
-      });
-
+      allProspects.push({ name, title, linkedin_url: linkedinUrl, company_domain: domain });
       console.log(`    ${name} (${title}) → ${linkedinUrl}`);
     }
 
     await sleep(3000);
   }
 
-  console.log(`\n  Stage 2 complete — ${allProspects.length} prospects with LinkedIn URLs`);
-  return allProspects;
+  const deduped = deduplicateBy(allProspects, 'linkedin_url');
+
+  const removed = allProspects.length - deduped.length;
+  if (removed > 0) console.log(`\n  Removed ${removed} duplicate LinkedIn URL(s)`);
+
+  console.log(`\n  Stage 2 complete — ${deduped.length} unique prospects with LinkedIn URLs`);
+  return deduped;
 }
 
 module.exports = { findDecisionMakers };
